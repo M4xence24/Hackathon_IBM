@@ -1,7 +1,6 @@
 import pandas as pd
 from sklearn.dummy import DummyRegressor
 from skore import evaluate
-from parkinson.hub import load_skore_credentials
 from skore import Project, login
 
 
@@ -31,8 +30,8 @@ report = evaluate(dummy, X, y)
 report.metrics.rmse()
 
 
-cfg = load_skore_credentials()
+
 login(mode="hub")
-project = Project(name="bobathon-esilv", mode="hub", workspace=cfg["workspace"])
+project = Project(name="bobathon-esilv", mode="hub", workspace="barthon")
 project.put("01_dummy", report)
 # The console prints: Consult your report at https://skore.probabl.ai/…
