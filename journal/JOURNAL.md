@@ -4,9 +4,9 @@
 
 - **Project / dataset:** Parkinson's disease multi-cohort synthetic visits — regression
 - **Goal:** minimize RMSE for the true OFF MDS-UPDRS motor score, on patients held out from training
-- **Last experiment:** 06_dataops - done
-- **Last result:** RMSE 7.53 ± 0.15 (GroupKFold 5-fold, DataOps graph) — Day 2 complete
-- **Final submission:** `submissions/06_dataops.csv` (11 013 rows) — hub URL: https://skore.probabl.ai/barthon/bobathon-esilv/cross-validations/67956
+- **Last experiment:** 12_blend_ridge - done
+- **Last result:** RMSE 4.25 ± 0.09 (GroupKFold 5-fold, BlendRegressor w=0.75: residual HGBR + Ridge) — **new best**
+- **Latest submission:** `submissions/09_blend_ridge.csv` (11 013 rows) — hub key `09_blend_ridge`
 
 - **Workspace decisions** (immutable unless the user pivots):
   - tabular library: pandas - recorded: 2025-01-01
@@ -22,8 +22,15 @@
 
 ## Data understanding (EDA)
 
-- **Status:** skipped - 2025-01-01
-- **Summary:** n/a
+- **Status:** done - 2025-07-11
+- **Summary:** 44 590 visits × 14 columns, 5 576 patients (~8 visits/patient). Target
+  (true OFF MDS-UPDRS) is approximately Normal (mean 37.5, SD 16.5). Strongest
+  predictors: `off` (r=0.87) and `on` (r=0.67), both heavily missing (42 % and 30 %) —
+  explains HGBR's advantage over Ridge via NaN routing. No datetime columns; GroupKFold
+  is the correct splitter. `rater_id` (50 raters, Cramér V 0.019) is a candidate
+  feature not yet used. `time_since_intake_off` is 79 % missing — its absence is itself
+  signal. `age_at_diagnosis` ↔ `age` collinear (r=0.94): tree models are immune, Ridge
+  needs alpha tuning.
 - **Report:** [data/eda.md](../data/eda.md)
 
 ## History
@@ -36,6 +43,13 @@
 | `04_hgbr` | HistGradientBoostingRegressor — NaN as signal, no imputation, grouped CV | done | RMSE 7.75 ± 0.15 (grouped CV) — 27 % below Ridge | [design note](04_hgbr.md) |
 | `05_tabular_pipeline` | skrub tabular_pipeline — all columns including gene/cohort, grouped CV | done | RMSE 7.53 ± 0.14 (grouped CV) — 3 % below HGBR | [design note](05_tabular_pipeline.md) |
 | `06_dataops` | skrub DataOps graph — GroupKFold baked in, same model as 05, preferred architecture | done | RMSE 7.53 ± 0.15 (grouped CV, DataOps) — matches 05; **final submission** | [design note](06_dataops.md) |
+| `07_ridge_cv` | RidgeCV 30-alpha log-spaced grid, 8 numeric features, GroupKFold(5) DataOps | done | RMSE 10.60 ± 0.27 — identical to 03_grouped_cv; alpha=1.0 was already optimal | [design note](07_ridge_cv.md) |
+| `08_hgbr_tuned` | GridSearchCV HGBR hyperparameter tuning (max_iter/learning_rate/max_leaf_nodes), GroupKFold(5) DataOps | done | RMSE 7.51 ± 0.13 — marginal 0.02 improvement over 06_dataops | [design note](08_hgbr_tuned.md) |
+| `09_patient_features` | Per-patient aggregates (visit count, ledd/on/off mean+std) merged onto visits, tuned HGBR, GroupKFold(5) DataOps | done | RMSE 5.38 ± 0.12 — **28 % improvement** over 08_hgbr_tuned; best CV result | [design note](09_patient_features.md) |
+| `10_residual_patient` | ResidualRegressor (HGBR on y−baseline): clinical baseline + levodopa decay features + patient aggregates; GroupKFold(5) | done | RMSE 4.92 ± 0.09 — 9 % below 09_patient_features (5.38) | [design note](10_residual_patient.md) |
+| `11_residual_patient` | Same residual architecture with richer patient severity profile (std/min/max off, disease duration, visit rank, on_dev_patient); GroupKFold(5) | done | RMSE 4.58 ± 0.11 — 7 % below 10_residual_patient | [design note](11_residual_patient.md) |
+| `step6_seeds` *(diagnostic)* | Seed noise + early-stopping diagnostic: 2 feature variants × 3 seeds × 2 stopping modes; no hub push, no submission | done | See script output — purpose was to confirm feature variant signal exceeds seed variance | n/a |
+| `12_blend_ridge` | BlendRegressor (w=0.75 HGBR + 0.25 Ridge) with temporal neighbourhood features (prev/next OFF, OFF slope); early-stopping HGBR; GroupKFold(5) | done | RMSE 4.25 ± 0.09 — **new best**; 7 % below 11_residual_patient | [design note](12_blend_ridge.md) |
 
 ## Backlog
 

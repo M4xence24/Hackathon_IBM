@@ -1,0 +1,8 @@
+Team : barthon
+Members :
+Cyrille LEJEUNE, cyrille.lejeune@edu.devinci.fr
+Léo RABIAT-HUMBERT, leo.rabiat--humbert@edu.devinci.fr
+Maxence BELLENGUEZ, maxence.bellenguez@edu.devinci.fr
+ESILV-4-A4-PAR-CT-ASD2
+
+Best model : 09_blend_ridge
